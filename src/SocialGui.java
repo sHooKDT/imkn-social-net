@@ -11,7 +11,7 @@ public class SocialGui extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("SocialGui.fxml"));
         Scene scene = new Scene(root);
 
-        primaryStage.setTitle("VTerakte");
+        primaryStage.setTitle("Social network");
         primaryStage.setScene(scene);
         primaryStage.show();
         init();

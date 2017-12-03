@@ -1,10 +1,12 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import com.sun.tools.javac.util.ArrayUtils;
+
+import java.util.*;
 
 public class Community {
     List<Human> people = new ArrayList<>();
     List<Relation> relations = new ArrayList<>();
+
+    public final int RECOMMENDATIONS_LIMIT = 10;
 
     public List<Relation> findRelations (Human x) {
         List<Relation> result = new ArrayList<>();
@@ -13,6 +15,17 @@ public class Community {
                 result.add(relation);
             }
         }
+        return result;
+    }
+
+    public List<Human> findRelated (Human x) {
+        List<Human> result = new ArrayList<>();
+
+        for (Relation relation: findRelations(x)) {
+            if (relation.getFirst() == x) result.add(relation.getSecond());
+            else result.add(relation.getFirst());
+        }
+
         return result;
     }
 
@@ -33,6 +46,47 @@ public class Community {
 
     public void removeRelation (Relation x) {
         relations.remove(x);
+    }
+
+    public Human findMostFriendly () {
+        int[] humanFriendCounters = new int[people.size()];
+
+        for (Relation x: relations) {
+            humanFriendCounters[people.indexOf(x.getFirst())]++;
+            humanFriendCounters[people.indexOf(x.getSecond())]++;
+        }
+
+        int maxIndex=0;
+        int maxValue=0;
+
+        for (int i=0; i < humanFriendCounters.length; i++) {
+            if (humanFriendCounters[i] > maxValue) {
+                maxValue = humanFriendCounters[i];
+                maxIndex = i;
+            };
+        }
+
+        return people.get(maxIndex);
+    }
+
+    public List<Human> findRecommendations (Human x) {
+        List<Human> recommendations = new ArrayList<>(20);
+
+        Queue<Human> bfsQueue = new LinkedList<>();
+        bfsQueue.add(x);
+
+        while (!bfsQueue.isEmpty() && recommendations.size() < RECOMMENDATIONS_LIMIT) {
+            for (Human rec: findRelated(bfsQueue.poll())) {
+                if (!recommendations.contains(rec) && rec != x) {
+                    bfsQueue.add(rec);
+                    recommendations.add(rec);
+                }
+
+                if (recommendations.size() >= RECOMMENDATIONS_LIMIT) break;
+            }
+        }
+
+        return recommendations;
     }
 
     public String toString() {
