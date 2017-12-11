@@ -1,5 +1,3 @@
-import com.sun.tools.javac.util.ArrayUtils;
-
 import java.util.*;
 
 public class Community {
@@ -41,14 +39,17 @@ public class Community {
     }
 
     public void addRelation (Human first, Human second) {
-        relations.add(new Relation(first, second));
+        Relation possible = new Relation(first, second);
+
+        if (!relations.stream().anyMatch(r -> r.equals(possible)))
+            relations.add(possible);
     }
 
     public void removeRelation (Relation x) {
         relations.remove(x);
     }
 
-    public Human findMostFriendly () {
+    public List<Human> findMostFriendly () {
         int[] humanFriendCounters = new int[people.size()];
 
         for (Relation x: relations) {
@@ -56,17 +57,15 @@ public class Community {
             humanFriendCounters[people.indexOf(x.getSecond())]++;
         }
 
-        int maxIndex=0;
-        int maxValue=0;
+        int maxValue = Arrays.stream(humanFriendCounters).reduce(0, (a,b) -> a > b ? a : b);
 
+        List<Human> result = new ArrayList<>();
         for (int i=0; i < humanFriendCounters.length; i++) {
-            if (humanFriendCounters[i] > maxValue) {
-                maxValue = humanFriendCounters[i];
-                maxIndex = i;
-            };
+            if (humanFriendCounters[i] == maxValue) {
+                result.add(people.get(i));
+            }
         }
-
-        return people.get(maxIndex);
+        return result;
     }
 
     public List<Human> findRecommendations (Human x) {
@@ -74,17 +73,23 @@ public class Community {
 
         Queue<Human> bfsQueue = new LinkedList<>();
         bfsQueue.add(x);
+        Set<Human> seen = new HashSet<>();
+        seen.add(x);
 
         while (!bfsQueue.isEmpty() && recommendations.size() < RECOMMENDATIONS_LIMIT) {
             for (Human rec: findRelated(bfsQueue.poll())) {
-                if (!recommendations.contains(rec) && rec != x) {
+                if (!seen.contains(rec)) {
                     bfsQueue.add(rec);
-                    recommendations.add(rec);
+                    seen.add(rec);
+
+                    if (rec != x && !findRelated(x).contains(rec)) recommendations.add(rec);
                 }
 
                 if (recommendations.size() >= RECOMMENDATIONS_LIMIT) break;
             }
         }
+
+        if (recommendations.size() == 0) recommendations.addAll(this.findMostFriendly());
 
         return recommendations;
     }

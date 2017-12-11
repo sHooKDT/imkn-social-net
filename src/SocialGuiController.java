@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class SocialGuiController {
 
@@ -20,7 +21,7 @@ public class SocialGuiController {
     @FXML private TextField addHumanTextField;
 
     private Community facebook;
-    private final String db_filepath = "/Users/shook/Downloads/social_db.txt";
+    private final String db_filepath = "/home/shook/Downloads/social_db.txt";
 
     private void updateData() {
         ObservableList<Human> people = FXCollections.observableArrayList(facebook.people);
@@ -42,6 +43,24 @@ public class SocialGuiController {
         } else facebook = new Community();
 
         updateData();
+    }
+
+    private <T> void showListDialog(List<T> list, String header) {
+        ObservableList<T> observableList = FXCollections.observableArrayList(list);
+
+        Dialog<Void> dialog = new Dialog<>();
+
+        dialog.setHeaderText(header);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
+
+        ListView<T> recommendationsList = new ListView<>();
+        recommendationsList.setItems(observableList);
+
+        VBox pane = new VBox();
+        pane.getChildren().add(recommendationsList);
+
+        dialog.getDialogPane().setContent(pane);
+        dialog.showAndWait();
     }
 
     public void setAddHumanHandler() {
@@ -81,52 +100,28 @@ public class SocialGuiController {
     public void showFriendsHandler() {
         if (!peopleList.getSelectionModel().isEmpty()) {
             Human selected = peopleList.getSelectionModel().getSelectedItem();
-
-            Dialog<Void> dialog = new Dialog<>();
-
-            dialog.setHeaderText("Friends of " + selected.getName());
-            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
-
-            ListView<Human> relationsList = new ListView<>();
-            relationsList.setItems(FXCollections.observableArrayList(facebook.findRelated(selected)));
-
-            VBox pane = new VBox();
-            pane.getChildren().add(relationsList);
-
-            dialog.getDialogPane().setContent(pane);
-            dialog.showAndWait();
+            showListDialog(facebook.findRelated(selected), "Friends of " + selected.getName());
         }
     }
 
     public void showFriendliestHandler() {
-        Human mostFriendly = facebook.findMostFriendly();
+        List<Human> mostFriendly = facebook.findMostFriendly();
 
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Most friendly");
-        alert.setHeaderText("This is the friendliest man of the world");
-        alert.setContentText(mostFriendly.getName());
-
-        alert.showAndWait();
+        if (mostFriendly.size() == 1) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Most friendly");
+            alert.setHeaderText("This is the friendliest man of the world");
+            alert.setContentText(mostFriendly.get(0).getName());
+            alert.showAndWait();
+        } else {
+            showListDialog(mostFriendly, "Friendliest people");
+        }
     }
 
     public void showRecommendationsHandler() {
         if (!peopleList.getSelectionModel().isEmpty()) {
             Human selected = peopleList.getSelectionModel().getSelectedItem();
-            ObservableList<Human> recommendations = FXCollections.observableArrayList(facebook.findRecommendations(selected));
-
-            Dialog<Void> dialog = new Dialog<>();
-
-            dialog.setHeaderText("Recommendations for " + selected.getName());
-            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
-
-            ListView<Human> recommendationsList = new ListView<>();
-            recommendationsList.setItems(recommendations);
-
-            VBox pane = new VBox();
-            pane.getChildren().add(recommendationsList);
-
-            dialog.getDialogPane().setContent(pane);
-            dialog.showAndWait();
+            showListDialog(facebook.findRecommendations(selected), "Recommendations for " + selected.getName());
         }
     }
 
